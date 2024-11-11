@@ -11,10 +11,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class FuelController {
     @FXML
@@ -129,26 +126,59 @@ public class FuelController {
     @FXML
     protected void onCalculateButtonClick() {
         try {
+            // Parse input values from the fields
             double distance = Double.parseDouble(distanceField.getText());
             double fuelUsed = Double.parseDouble(fuelField.getText());
 
-            // Perform calculation with localization
-            String localizedResult = FuelUtils.calculateFuelCost(distance, fuelUsed, currentLocale);
+            // Calculate consumption and cost
+            double consumptionPer100Km = FuelUtils.calculateConsumptionPer100Km(distance, fuelUsed);
+            double totalCost = fuelUsed * FuelUtils.PRICE_PER_LITER; // Base price per liter
 
-            // Fetch the localized "Result:" prefix
+            // Adjust cost for the current locale
+            Currency currency;
+            if (currentLocale.getLanguage().equals(Locale.JAPANESE.getLanguage())) {
+                totalCost *= FuelUtils.YEN_CONVERSION_RATE;
+                currency = Currency.getInstance("JPY");
+            } else if (currentLocale.getLanguage().equals(Locale.ENGLISH.getLanguage())) {
+                totalCost *= FuelUtils.USD_CONVERSION_RATE;
+                currency = Currency.getInstance("USD");
+            } else if (currentLocale.getLanguage().equals(Locale.FRENCH.getLanguage())) {
+                totalCost *= FuelUtils.EURO_CONVERSION_RATE;
+                currency = Currency.getInstance("EUR");
+            } else if (currentLocale.getLanguage().equals("fa")) {
+                totalCost *= FuelUtils.IRR_CONVERSION_RATE;
+                currency = Currency.getInstance("IRR");
+            } else {
+                currency = Currency.getInstance("EUR");
+            }
+
+            // Save the log to the database
+            FuelUtils.saveLogToDatabase(
+                    distance, fuelUsed, consumptionPer100Km, totalCost, currency.getCurrencyCode(), currentLocale.getLanguage()
+            );
+
+            // Localize the result display
             ResourceBundle bundle = ResourceBundle.getBundle("messages", currentLocale);
-            String resultText = bundle.getString("result.label");
+            String resultTemplate = bundle.getString("fuel.cost.result");
 
-            // Display the localized result
-            resultLabel.setText(resultText + " " + localizedResult);
+            // Format the result dynamically
+            String formattedResult = java.text.MessageFormat.format(resultTemplate,
+                    String.format("%.2f", consumptionPer100Km),
+                    String.format("%.2f %s", totalCost, currency.getCurrencyCode()));
 
-            // Reload latest data after adding a new entry
+            // Display the result in the UI
+            resultLabel.setText(formattedResult);
+
+            // Reload the latest data to show in the table
             loadLatestData();
         } catch (NumberFormatException e) {
+            // Handle invalid input
             ResourceBundle bundle = ResourceBundle.getBundle("messages", currentLocale);
             resultLabel.setText(bundle.getString("invalid.input"));
         }
     }
+
+
 
 
 

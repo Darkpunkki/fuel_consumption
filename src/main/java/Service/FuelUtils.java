@@ -9,11 +9,11 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class FuelUtils {
-    private static final double PRICE_PER_LITER = 1.67;
-    private static final double YEN_CONVERSION_RATE = 145.0;
-    private static final double USD_CONVERSION_RATE = 1.1;
-    private static final double EURO_CONVERSION_RATE = 1.0;
-    private static final double IRR_CONVERSION_RATE = 45000.0;
+    public static final double PRICE_PER_LITER = 1.67;
+    public static final double YEN_CONVERSION_RATE = 145.0;
+    public static final double USD_CONVERSION_RATE = 1.1;
+    public static final double EURO_CONVERSION_RATE = 1.0;
+    public static final double IRR_CONVERSION_RATE = 45000.0;
 
     public static double calculateConsumptionPer100Km(double distance, double fuelUsed) {
         return (fuelUsed / distance) * 100;
@@ -57,7 +57,7 @@ public class FuelUtils {
     }
 
 
-    private static void saveLogToDatabase(double distance, double fuelUsed, double consumptionPer100Km, double cost, String currency, String language) {
+    public static void saveLogToDatabase(double distance, double fuelUsed, double consumptionPer100Km, double cost, String currency, String language) {
         String query = "INSERT INTO fuel_logs (distance, fuel_used, consumption_per_100km, cost, currency, language) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseUtils.getConnection();
